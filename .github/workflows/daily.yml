@@ -24,6 +24,14 @@ jobs:
 
       - name: Install deps
         run: pip install -r requirements.txt
+      - name: Show commit
+        run: |
+          git rev-parse HEAD
+          python - <<'PY'
+          from pathlib import Path
+          text = Path("src/generate_site.py").read_text(encoding="utf-8")
+          print("has_old_error_string=", "Failed to parse JSON from Gemini response" in text)
+          PY
 
       - name: Generate site
         run: python src/generate_site.py
