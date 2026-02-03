@@ -118,10 +118,10 @@ def gemini_translate_and_summarize(text: str) -> Dict[str, str]:
     model = env("GEMINI_TEXT_MODEL", default="gemini-2.5-flash")
 
     prompt = (
-        "You are a helpful assistant that translates text into Traditional Chinese (繁體中文) "
-        "and writes a concise summary in Traditional Chinese. "
+        "Translate the input into Traditional Chinese (繁體中文) and write a concise summary in Traditional Chinese. "
         "If the input is already Traditional Chinese, keep it as-is.\n\n"
-        "Return strict JSON with keys: language, translated_text, summary_zh_tw. "
+        "Return ONLY strict JSON with keys: language, translated_text, summary_zh_tw. "
+        "Do NOT include any markdown, code fences, or extra text.\n"
         "language should be a short label like 'zh-TW', 'zh-CN', 'en', etc. "
         "If the input is already Traditional Chinese, translated_text must equal the original content. "
         "Keep the summary within 6 bullet points or 6 sentences.\n\n"
@@ -139,6 +139,7 @@ def gemini_translate_and_summarize(text: str) -> Dict[str, str]:
         "generationConfig": {
             "temperature": 0.2,
             "maxOutputTokens": 800,
+            "responseMimeType": "application/json",
         },
     }
 
