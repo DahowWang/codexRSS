@@ -28,8 +28,11 @@ jobs:
       - name: Generate site
         run: python src/generate_site.py
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          OPENAI_MODEL: ${{ secrets.OPENAI_MODEL }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_TEXT_MODEL: ${{ secrets.GEMINI_TEXT_MODEL }}
+          GEMINI_IMAGE_MODEL: ${{ secrets.GEMINI_IMAGE_MODEL }}
+          GEMINI_IMAGE_SIZE: ${{ secrets.GEMINI_IMAGE_SIZE }}
+          ENABLE_IMAGE_GEN: ${{ secrets.ENABLE_IMAGE_GEN }}
           GMAIL_CLIENT_ID: ${{ secrets.GMAIL_CLIENT_ID }}
           GMAIL_CLIENT_SECRET: ${{ secrets.GMAIL_CLIENT_SECRET }}
           GMAIL_REFRESH_TOKEN: ${{ secrets.GMAIL_REFRESH_TOKEN }}

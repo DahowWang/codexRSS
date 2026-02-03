@@ -16,8 +16,8 @@ TZ = ZoneInfo("Asia/Taipei")
 
 GMAIL_TOKEN_URL = "https://oauth2.googleapis.com/token"
 GMAIL_API_BASE = "https://gmail.googleapis.com/gmail/v1"
-OPENAI_API_URL = "https://api.openai.com/v1/responses"
-OPENAI_IMAGE_URL = "https://api.openai.com/v1/images"
+GEMINI_TEXT_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+GEMINI_OPENAI_IMAGE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/images/generations"
 
 
 def env(name: str, default: Optional[str] = None, required: bool = False) -> str:
@@ -113,12 +113,13 @@ def extract_text_from_payload(payload: Dict[str, Any]) -> str:
     return combined.strip()
 
 
-def openai_translate_and_summarize(text: str) -> Dict[str, str]:
-    api_key = env("OPENAI_API_KEY", required=True)
-    model = env("OPENAI_MODEL", default="gpt-4.1-mini")
+def gemini_translate_and_summarize(text: str) -> Dict[str, str]:
+    api_key = env("GEMINI_API_KEY", required=True)
+    model = env("GEMINI_TEXT_MODEL", default="gemini-2.5-flash")
 
     prompt = (
-        "You are a helpful assistant that translates text into Traditional Chinese (繁體中文) and writes a concise summary in Traditional Chinese. "
+        "You are a helpful assistant that translates text into Traditional Chinese (繁體中文) "
+        "and writes a concise summary in Traditional Chinese. "
         "If the input is already Traditional Chinese, keep it as-is.\n\n"
         "Return strict JSON with keys: language, translated_text, summary_zh_tw. "
         "language should be a short label like 'zh-TW', 'zh-CN', 'en', etc. "
@@ -128,39 +129,43 @@ def openai_translate_and_summarize(text: str) -> Dict[str, str]:
     )
 
     payload = {
-        "model": model,
-        "input": prompt,
-        "max_output_tokens": 800,
+        "contents": [
+            {
+                "parts": [
+                    {"text": prompt},
+                ]
+            }
+        ],
+        "generationConfig": {
+            "temperature": 0.2,
+            "maxOutputTokens": 800,
+        },
     }
 
     resp = requests.post(
-        OPENAI_API_URL,
-        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+        GEMINI_TEXT_API_URL.format(model=model),
+        headers={"x-goog-api-key": api_key, "Content-Type": "application/json"},
         data=json.dumps(payload),
         timeout=60,
     )
     if resp.status_code != 200:
-        raise SystemExit(f"OpenAI API error {resp.status_code}: {resp.text}")
+        raise SystemExit(f"Gemini API error {resp.status_code}: {resp.text}")
 
     data = resp.json()
-    # Response API returns output array; extract text from the first message.
     output_text = ""
-    for item in data.get("output", []) or []:
-        if item.get("type") == "message":
-            for c in item.get("content", []) or []:
-                if c.get("type") == "output_text":
-                    output_text += c.get("text", "")
+    for candidate in data.get("candidates", []) or []:
+        content = candidate.get("content", {})
+        for part in content.get("parts", []) or []:
+            output_text += part.get("text", "")
 
     output_text = output_text.strip()
-    # Best-effort JSON parse.
     try:
         return json.loads(output_text)
     except json.JSONDecodeError:
-        # Try to salvage JSON from the text.
         match = re.search(r"\{.*\}", output_text, flags=re.S)
         if match:
             return json.loads(match.group(0))
-        raise SystemExit("Failed to parse JSON from OpenAI response")
+        raise SystemExit("Failed to parse JSON from Gemini response")
 
 
 def normalize_text(text: str, max_chars: int = 12000) -> str:
@@ -220,31 +225,32 @@ def build_image_prompt(subject: str, summary: str) -> str:
 
 
 def generate_image(prompt: str, out_path: str) -> None:
-    api_key = env("OPENAI_API_KEY", required=True)
-    model = env("OPENAI_IMAGE_MODEL", default="gpt-image-1")
-    size = env("OPENAI_IMAGE_SIZE", default="1024x1024")
-    quality = env("OPENAI_IMAGE_QUALITY", default="medium")
+    api_key = env("GEMINI_API_KEY", required=True)
+    model = env("GEMINI_IMAGE_MODEL", default="imagen-3.0-generate-002")
+    size = env("GEMINI_IMAGE_SIZE", default="1024x1024").strip()
 
     payload = {
         "model": model,
         "prompt": prompt,
-        "size": size,
-        "quality": quality,
+        "response_format": "b64_json",
+        "n": 1,
     }
+    if size:
+        payload["size"] = size
 
     resp = requests.post(
-        OPENAI_IMAGE_URL,
+        GEMINI_OPENAI_IMAGE_URL,
         headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
         data=json.dumps(payload),
         timeout=120,
     )
     if resp.status_code != 200:
-        raise SystemExit(f"OpenAI Image API error {resp.status_code}: {resp.text}")
+        raise SystemExit(f"Gemini Image API error {resp.status_code}: {resp.text}")
 
     data = resp.json()
     b64 = data.get("data", [{}])[0].get("b64_json")
     if not b64:
-        raise SystemExit("OpenAI Image API returned no image data")
+        raise SystemExit("Gemini Image API returned no image data")
 
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     with open(out_path, "wb") as f:
@@ -501,7 +507,7 @@ def main() -> None:
         if not raw_text:
             continue
 
-        ai = openai_translate_and_summarize(raw_text)
+        ai = gemini_translate_and_summarize(raw_text)
         translated_text = normalize_text(ai.get("translated_text", ""))
         summary_zh_tw = normalize_text(ai.get("summary_zh_tw", ""), max_chars=4000)
 

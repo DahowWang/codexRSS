@@ -13,11 +13,10 @@
 
 ### 2) GitHub Secrets
 在 repo 的 `Settings → Secrets and variables → Actions` 新增：
-- `OPENAI_API_KEY`
-- `OPENAI_MODEL`（可選，預設 `gpt-4.1-mini`）
-- `OPENAI_IMAGE_MODEL`（可選，預設 `gpt-image-1`）
-- `OPENAI_IMAGE_SIZE`（可選，預設 `1024x1024`）
-- `OPENAI_IMAGE_QUALITY`（可選，預設 `medium`）
+- `GEMINI_API_KEY`
+- `GEMINI_TEXT_MODEL`（可選，預設 `gemini-2.5-flash`）
+- `GEMINI_IMAGE_MODEL`（可選，預設 `imagen-3.0-generate-002`）
+- `GEMINI_IMAGE_SIZE`（可選，預設 `1024x1024`）
 - `ENABLE_IMAGE_GEN`（可選，`1` 開啟、`0` 關閉；預設 `1`）
 - `GMAIL_CLIENT_ID`
 - `GMAIL_CLIENT_SECRET`
@@ -34,10 +33,10 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 
-export OPENAI_API_KEY=...
-export OPENAI_IMAGE_MODEL=gpt-image-1
-export OPENAI_IMAGE_SIZE=1024x1024
-export OPENAI_IMAGE_QUALITY=medium
+export GEMINI_API_KEY=...
+export GEMINI_TEXT_MODEL=gemini-2.5-flash
+export GEMINI_IMAGE_MODEL=imagen-3.0-generate-002
+export GEMINI_IMAGE_SIZE=1024x1024
 export ENABLE_IMAGE_GEN=1
 export GMAIL_CLIENT_ID=...
 export GMAIL_CLIENT_SECRET=...
