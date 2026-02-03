@@ -155,13 +155,23 @@ def gemini_translate_and_summarize(text: str) -> Dict[str, str]:
     data = resp.json()
     output_text = ""
     for candidate in data.get("candidates", []) or []:
+        if candidate.get("finishReason") == "SAFETY":
+            return {
+                "language": "unknown",
+                "translated_text": text,
+                "summary_zh_tw": "（內容因安全性限制無法摘要）",
+            }
         content = candidate.get("content", {})
         for part in content.get("parts", []) or []:
             output_text += part.get("text", "")
 
     output_text = output_text.strip()
     if not output_text:
-        raise SystemExit("Gemini response was empty or blocked.")
+        return {
+            "language": "unknown",
+            "translated_text": text,
+            "summary_zh_tw": "（內容摘要失敗）",
+        }
 
     # Strip common code fences if present.
     output_text = re.sub(r"^```(?:json)?\\s*", "", output_text)
@@ -184,11 +194,13 @@ def gemini_translate_and_summarize(text: str) -> Dict[str, str]:
         match = re.search(r"\{.*\}", output_text, flags=re.S)
         if match:
             return parse_loose_json(match.group(0))
-        snippet = output_text[:2000]
-        raise SystemExit(
-            "Failed to parse JSON from Gemini response. "
-            f"First 2000 chars: {snippet}"
-        )
+        print("Gemini raw text (first 1000 chars):")
+        print(output_text[:1000])
+        return {
+            "language": "unknown",
+            "translated_text": text,
+            "summary_zh_tw": "（內容摘要解析失敗）",
+        }
 
 
 def normalize_text(text: str, max_chars: int = 12000) -> str:
