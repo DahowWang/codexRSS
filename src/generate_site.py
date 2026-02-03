@@ -160,12 +160,30 @@ def gemini_translate_and_summarize(text: str) -> Dict[str, str]:
             output_text += part.get("text", "")
 
     output_text = output_text.strip()
+    if not output_text:
+        raise SystemExit("Gemini response was empty or blocked")
+
+    # Strip common code fences if present.
+    output_text = re.sub(r"^```(?:json)?\\s*", "", output_text)
+    output_text = re.sub(r"\\s*```$", "", output_text)
+
+    def parse_loose_json(text_value: str) -> Dict[str, str]:
+        try:
+            return json.loads(text_value)
+        except json.JSONDecodeError:
+            start = text_value.find("{")
+            end = text_value.rfind("}")
+            if start != -1 and end != -1 and end > start:
+                return json.loads(text_value[start : end + 1])
+            raise
+
     try:
-        return json.loads(output_text)
+        return parse_loose_json(output_text)
     except json.JSONDecodeError:
+        # Last attempt: find any JSON-looking object in the text.
         match = re.search(r"\{.*\}", output_text, flags=re.S)
         if match:
-            return json.loads(match.group(0))
+            return parse_loose_json(match.group(0))
         raise SystemExit("Failed to parse JSON from Gemini response")
 
 
