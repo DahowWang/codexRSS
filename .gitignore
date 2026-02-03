@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+public/index.html
+public/*.html
+public/images/
+.DS_Store
+
+# Secrets
+client_secret.json
