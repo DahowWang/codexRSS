@@ -161,7 +161,11 @@ def gemini_translate_and_summarize(text: str) -> Dict[str, str]:
 
     output_text = output_text.strip()
     if not output_text:
-        raise SystemExit("Gemini response was empty or blocked")
+        debug_path = os.path.join(os.path.dirname(__file__), "..", "data", "gemini_last.txt")
+        os.makedirs(os.path.dirname(debug_path), exist_ok=True)
+        with open(debug_path, "w", encoding="utf-8") as f:
+            f.write("[EMPTY RESPONSE]")
+        raise SystemExit(f"Gemini response was empty or blocked. Debug saved to {debug_path}")
 
     # Strip common code fences if present.
     output_text = re.sub(r"^```(?:json)?\\s*", "", output_text)
@@ -184,7 +188,11 @@ def gemini_translate_and_summarize(text: str) -> Dict[str, str]:
         match = re.search(r"\{.*\}", output_text, flags=re.S)
         if match:
             return parse_loose_json(match.group(0))
-        raise SystemExit("Failed to parse JSON from Gemini response")
+        debug_path = os.path.join(os.path.dirname(__file__), "..", "data", "gemini_last.txt")
+        os.makedirs(os.path.dirname(debug_path), exist_ok=True)
+        with open(debug_path, "w", encoding="utf-8") as f:
+            f.write(output_text)
+        raise SystemExit(f"Failed to parse JSON from Gemini response. Debug saved to {debug_path}")
 
 
 def normalize_text(text: str, max_chars: int = 12000) -> str:
