@@ -211,7 +211,7 @@ def normalize_text(text: str, max_chars: int = 12000) -> str:
 
 
 def extract_category(subject: str) -> str:
-    match = re.match(r"^[\\[【(]([^\\]】)]+)[\\]】)]\\s*", subject)
+    match = re.match(r"^[\\[【(]([^\\]\\)】]+)[\\]\\)】]\\s*", subject)
     if match:
         return match.group(1).strip()
     return "未分類"
