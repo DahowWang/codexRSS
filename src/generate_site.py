@@ -174,8 +174,8 @@ def gemini_translate_and_summarize(text: str) -> Dict[str, str]:
         }
 
     # Strip common code fences if present.
-    output_text = re.sub(r"^```(?:json)?\\s*", "", output_text)
-    output_text = re.sub(r"\\s*```$", "", output_text)
+    output_text = re.sub(r"^```(?:json)?\s*", "", output_text)
+    output_text = re.sub(r"\s*```$", "", output_text)
 
     def parse_loose_json(text_value: str) -> Dict[str, str]:
         try:
@@ -247,8 +247,8 @@ def build_thumb_html(image_rel_path: str, subject: str) -> str:
 
 
 def build_image_prompt(subject: str, summary: str) -> str:
-    clean_subject = re.sub(r"^[\\[【(].*?[\\]】)]\\s*", "", subject).strip()
-    clean_summary = re.sub(r"\\s+", " ", summary).strip()
+    clean_subject = re.sub(r"^[\[【(].*?[\]】)]\s*", "", subject).strip()
+    clean_summary = re.sub(r"\s+", " ", summary).strip()
     if len(clean_summary) > 400:
         clean_summary = clean_summary[:400]
     return (
