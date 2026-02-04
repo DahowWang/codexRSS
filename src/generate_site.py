@@ -572,11 +572,13 @@ def main() -> None:
 
     html_out = render_html(entries, target_date)
     out_path = os.path.join(os.path.dirname(__file__), "..", "public", "index.html")
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
     with open(out_path, "w", encoding="utf-8") as f:
         f.write(html_out)
 
     # Save raw data for debugging if needed.
     data_path = os.path.join(os.path.dirname(__file__), "..", "data", "latest.json")
+    os.makedirs(os.path.dirname(data_path), exist_ok=True)
     with open(data_path, "w", encoding="utf-8") as f:
         json.dump({"date": str(target_date), "count": len(entries)}, f, ensure_ascii=False, indent=2)
 
